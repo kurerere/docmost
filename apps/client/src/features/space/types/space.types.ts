@@ -9,14 +9,21 @@ export interface ISpaceSharingSettings {
   disabled?: boolean;
 }
 
+export interface ISpaceExportSettings {
+  disabled?: boolean;
+}
+
 export interface ISpaceCommentsSettings {
   allowViewerComments?: boolean;
 }
 
 export interface ISpaceSettings {
   sharing?: ISpaceSharingSettings;
+  export?: ISpaceExportSettings;
   comments?: ISpaceCommentsSettings;
 }
+
+export type SpaceListStatus = "active" | "archived" | "all";
 
 export type ISpaceHomePage = {
   id: string;
@@ -48,6 +55,7 @@ export interface ISpace {
   homePage?: ISpaceHomePage | null;
   // for updates
   disablePublicSharing?: boolean;
+  disableExport?: boolean;
   allowViewerComments?: boolean;
 }
 

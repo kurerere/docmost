@@ -35,7 +35,7 @@ import { useEffect } from "react";
 import { getApiErrorMessage } from "@/lib/api-error.ts";
 import { validate as isValidUuid } from "uuid";
 
-const ARCHIVED_PROBE_PARAMS: QueryParams = { archived: true, limit: 1 };
+const ARCHIVED_PROBE_PARAMS: QueryParams = { status: "archived", limit: 1 };
 
 export function useGetSpacesQuery(
   params?: QueryParams,
@@ -153,6 +153,15 @@ export function useUpdateSpaceMutation() {
         queryClient.setQueryData(["space", variables.spaceId], updatedSpace);
         queryClient.setQueryData(["space", data.slug], updatedSpace);
       }
+      // a URL slug in another letter case caches the same space under its own key
+      queryClient.setQueriesData<ISpace>(
+        {
+          queryKey: ["space"],
+          predicate: (query) =>
+            (query.state.data as ISpace | undefined)?.id === data.id,
+        },
+        (cached) => ({ ...cached, ...data }),
+      );
 
       queryClient.invalidateQueries({
         queryKey: ["spaces"],

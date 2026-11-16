@@ -27,6 +27,7 @@ import { validate as isValidUUID } from 'uuid';
 import { sql } from 'kysely';
 import { TransclusionService } from '../page/transclusion/transclusion.service';
 import { TransclusionLookup } from '../page/transclusion/transclusion.types';
+import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
 
 @Injectable()
 export class ShareService {
@@ -40,6 +41,20 @@ export class ShareService {
     private readonly tokenService: TokenService,
     private readonly transclusionService: TransclusionService,
   ) {}
+
+  async getShares(userId: string, pagination: PaginationOptions) {
+    const result = await this.shareRepo.getShares(userId, pagination);
+    const accessiblePageIds = new Set(
+      await this.pagePermissionRepo.filterAccessiblePageIds({
+        pageIds: result.items.map((share) => share.pageId),
+        userId,
+      }),
+    );
+    result.items = result.items.filter((share) =>
+      accessiblePageIds.has(share.pageId),
+    );
+    return result;
+  }
 
   async getShareTree(shareId: string, workspaceId: string) {
     const share = await this.shareRepo.findById(shareId);
@@ -166,6 +181,7 @@ export class ShareService {
             'pages.title',
             'pages.icon',
             'pages.parentPageId',
+            'pages.spaceId as pageSpaceId',
             sql`0`.as('level'),
             'shares.id as shareId',
             'shares.key as shareKey',
@@ -190,6 +206,7 @@ export class ShareService {
                   'p.title',
                   'p.icon',
                   'p.parentPageId',
+                  'p.spaceId as pageSpaceId',
                   sql`ph.level + 1`.as('level'),
                   's.id as shareId',
                   's.key as shareKey',
@@ -201,6 +218,7 @@ export class ShareService {
                   's.createdAt',
                 ])
                 .where('p.deletedAt', 'is', null)
+                .whereRef('p.spaceId', '=', 'ph.pageSpaceId')
                 .where(sql`ph.share_id`, 'is', null) // stop if share found
                 .where(sql`ph.level`, '<', sql`25`), // prevent loop
           ),
