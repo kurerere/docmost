@@ -21,9 +21,22 @@ export default function ShareList() {
   const { cursor, goNext, goPrev } = useCursorPaginate();
   const { data, isLoading } = useGetSharesQuery({ cursor });
   const locale = useDateFnsLocale();
+  const pagination = (
+    <Paginate
+      hasPrevPage={data?.meta?.hasPrevPage}
+      hasNextPage={data?.meta?.hasNextPage}
+      onNext={() => goNext(data?.meta?.nextCursor)}
+      onPrev={goPrev}
+    />
+  );
 
   if (!isLoading && data?.items.length === 0) {
-    return <EmptyState icon={IconWorld} title={t("No shared pages")} />;
+    return (
+      <>
+        <EmptyState icon={IconWorld} title={t("No shared pages")} />
+        {pagination}
+      </>
+    );
   }
 
   return (
@@ -99,14 +112,7 @@ export default function ShareList() {
         </Table>
       </Table.ScrollContainer>
 
-      {data?.items.length > 0 && (
-        <Paginate
-          hasPrevPage={data?.meta?.hasPrevPage}
-          hasNextPage={data?.meta?.hasNextPage}
-          onNext={() => goNext(data?.meta?.nextCursor)}
-          onPrev={goPrev}
-        />
-      )}
+      {pagination}
     </>
   );
 }

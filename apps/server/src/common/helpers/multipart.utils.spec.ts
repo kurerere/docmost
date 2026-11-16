@@ -1,6 +1,5 @@
-import { once } from 'events';
 import { Readable, Writable } from 'stream';
-import { pipeline } from 'stream/promises';
+import { finished, pipeline } from 'stream/promises';
 import { FastifyInstance } from 'fastify';
 import { bufferMultipartFile, streamMultipartFile } from './multipart.utils';
 import {
@@ -143,15 +142,18 @@ describe('multipart utils', () => {
         fileReceived,
       );
 
-      expect((await failed).message).toBe('Premature close');
-      await expect(settled).rejects.toThrow('Premature close');
+      const error = await failed;
+      expect(error).toMatchObject({
+        code: expect.stringMatching(/^(ECONNRESET|ERR_STREAM_PREMATURE_CLOSE)$/),
+      });
+      await expect(settled).rejects.toBe(error);
     });
 
     it('fails the stream when the client left before reading started', async () => {
       let streamFailed: (err: Error) => void;
       const failed = new Promise<Error>((resolve) => (streamFailed = resolve));
       onFile = async (file) => {
-        await once(file.file, 'close');
+        await finished(file.file).catch(() => undefined);
         return streamMultipartFile(file, (stream) =>
           collect(stream).catch(streamFailed),
         );
@@ -164,7 +166,9 @@ describe('multipart utils', () => {
         fileReceived,
       );
 
-      expect((await failed).message).toBe('Premature close');
+      expect(await failed).toMatchObject({
+        code: expect.stringMatching(/^(ECONNRESET|ERR_STREAM_PREMATURE_CLOSE)$/),
+      });
     });
   });
 
