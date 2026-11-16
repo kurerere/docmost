@@ -56,6 +56,7 @@ describe('PersistenceExtension.onStoreDocument', () => {
         invalidateForEdit: jest.fn().mockResolvedValue(null),
         notifyInvalidated: jest.fn().mockResolvedValue(undefined),
       } as any,
+      { getPageHistoryInterval: jest.fn().mockReturnValue(300_000) } as any,
     );
   });
 
