@@ -820,7 +820,7 @@ export class WorkspaceService {
   async getWorkspaceUsers(
     workspaceId: string,
     pagination: PaginationOptions,
-    opts?: { status?: WorkspaceUserListStatus },
+    opts?: { status?: WorkspaceUserListStatus; adminView?: boolean },
   ): Promise<CursorPaginationResult<User>> {
     return this.userRepo.getUsersPaginated(workspaceId, pagination, opts);
   }
@@ -1088,6 +1088,7 @@ export class WorkspaceService {
           name: 'Deleted user',
           email: v4() + '@deleted.docmost.com',
           avatarUrl: null,
+          timezone: null,
           settings: null,
           deletedAt: new Date(),
         },
